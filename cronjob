@@ -1,0 +1,23 @@
+#!/bin/sh
+
+        if [ ${CRONJOB} -eq 1 ]; then
+
+            exit 1 # Manually exit, no cleanups to prevent deleting an active PID file
+        else
+            wait_for_keypress
+            
+        if [ -f "${MYHOMEDIR}/lynis.pid" ]; then rm -f "${MYHOMEDIR}/lynis.pid"; fi
+        if [ -f "./lynis.pid" ]; then rm -f "./lynis.pid"; fi
+        if [ -f "/var/run/lynis.pid" ]; then rm -f "/var/run/lynis.pid"; fi
+    fi
+
+    # Ensure symlink attack is not possible, by confirming there is no symlink of the file already
+    OURPID=$(echo $$)
+    if [ -L ${PIDFILE} ]; then
+        echo "Found symlinked PID file (${PIDFILE}), quitting"
+        ExitFatal
+    else
+        # Create new PID file writable only by owner
+        echo "${OURPID}" > ${PIDFILE}
+        chmod 600 ${PIDFILE}
+    fi
